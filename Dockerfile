@@ -1,22 +1,41 @@
-# Use the full, standard Python runtime as a parent image
-FROM python:3.10
+# STAGE 1: The "Builder"
+# This stage will have all the tools needed to compile the tokenizers package.
+FROM python:3.10 as builder
 
-# Set the working directory in the container
+# Set the working directory
 WORKDIR /app
 
-# Install PyTorch separately from the official source for CPU
-RUN pip install torch==1.13.1+cpu --extra-index-url https://download.pytorch.org/whl/cpu
+# Install the Rust toolchain, which is required to compile tokenizers
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
 
-# Copy the requirements file
+# Create and activate a virtual environment
+ENV VIRTUAL_ENV=/app/venv
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Copy requirements and install them into the virtual environment
+# This will compile tokenizers for the correct architecture and install all other packages.
 COPY requirements.txt .
-
-# Install all dependencies in a single step.
-# Pip will install the tokenizers wheel from the URL in the requirements file first,
-# which satisfies the dependency for transformers before it is installed.
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application's code
+# STAGE 2: The "Runner"
+# This is the small, final image that will run the application.
+FROM python:3.10-slim
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the virtual environment from the builder stage.
+# This contains our perfectly compiled packages.
+COPY --from=builder /app/venv /app/venv
+
+# Copy the application code
 COPY . .
 
-# Expose a port to allow Render to map it.
+# Set the PATH to use the python from our virtual environment
+ENV PATH="/app/venv/bin:$PATH"
+
+# Expose the port and run the application
 EXPOSE 10000
+CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:10000", "app:app"]
