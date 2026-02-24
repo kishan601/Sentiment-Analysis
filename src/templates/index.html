@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1b263b;
+            --secondary-color: #415a77;
+            --accent-color: #00b4d8;
+            --text-color: #e0e0e0;
+            --font-family: 'Inter', sans-serif;
+
+            /* Sentiment background colors */
+            --positive-bg-color: #133a23; /* Dark, moody green */
+            --negative-bg-color: #4a1d21; /* Dark, moody red */
+            --neutral-bg-color: #0d1b2a;  /* Original navy */
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--neutral-bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.8s ease;
+        }
+
+        .container {
+            background-color: var(--primary-color);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        #sentiment-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        #text-input {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            border: 1px solid var(--secondary-color);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: var(--font-family);
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        #text-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.25);
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: #121212;
+            border: none;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #0096c7;
+            transform: translateY(-2px);
+        }
+
+        #result-container {
+            margin-top: 30px;
+            min-height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #result {
+            font-weight: 500;
+            font-size: 1.2rem;
+        }
+
+        .loader {
+            border: 4px solid var(--secondary-color);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sentiment Analysis</h1>
+        <form id="sentiment-form">
+            <textarea id="text-input" rows="4" placeholder="Enter text to analyze..."></textarea>
+            <button type="submit">Analyze</button>
+        </form>
+        <div id="result-container">
+            <div id="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('sentiment-form');
+        const textInput = document.getElementById('text-input');
+
+        // Submit on Enter key press
+        textInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault(); // Prevent new line
+                form.dispatchEvent(new Event('submit', { cancelable: true }));
+            }
+        });
+
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            // Reset background on new submission
+            document.body.style.backgroundColor = 'var(--neutral-bg-color)';
+
+            const text = textInput.value;
+            const resultContainer = document.getElementById('result-container');
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.textContent = '';
+            resultContainer.innerHTML = '<div class="loader"></div>'; // Show loader
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+
+                // Clear loader
+                resultContainer.innerHTML = '<div id="result"></div>';
+                const newResultDiv = document.getElementById('result');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    newResultDiv.textContent = `Error: ${data.error}`;
+                    newResultDiv.style.color = '#ff8a80';
+                    document.body.style.backgroundColor = 'var(--negative-bg-color)';
+                } else {
+                    const sentiment = data.label;
+                    const confidence = data.score.toFixed(2);
+                    newResultDiv.textContent = `Prediction: ${sentiment} (Confidence: ${confidence})`;
+                    
+                    if(sentiment === 'POSITIVE'){
+                        newResultDiv.style.color = '#80ffc2';
+                        document.body.style.backgroundColor = 'var(--positive-bg-color)';
+                    } else if (sentiment === 'NEGATIVE'){
+                        newResultDiv.style.color = '#ff8a80';
+                        document.body.style.backgroundColor = 'var(--negative-bg-color)';
+                    } else {
+                        newResultDiv.style.color = '#e0e0e0';
+                        document.body.style.backgroundColor = 'var(--neutral-bg-color)';
+                    }
+                }
+            } catch (error) {
+                 // Clear loader
+                resultContainer.innerHTML = '<div id="result"></div>';
+                const newResultDiv = document.getElementById('result');
+                newResultDiv.textContent = `Error: ${error.message}`;
+                newResultDiv.style.color = '#ff8a80';
+                document.body.style.backgroundColor = 'var(--negative-bg-color)';
+            }
+        });
+    </script>
+</body>
+</html>

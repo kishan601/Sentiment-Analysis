@@ -1,5 +1,5 @@
-from flask import Flask, request, jsonify
-from src.model import predict, load_model, MODEL_NAME
+from flask import Flask, request, jsonify, render_template
+from .model import predict, load_model, MODEL_NAME
 
 app = Flask(__name__)
 
@@ -7,6 +7,11 @@ app = Flask(__name__)
 def before_first_request():
     """Load the model before the first request."""
     load_model()
+
+@app.route("/")
+def index():
+    """Render the index page."""
+    return render_template("index.html")
 
 @app.route("/predict", methods=["POST"])
 def predict_endpoint():
@@ -30,4 +35,4 @@ def predict_endpoint():
     return jsonify(prediction)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True) 

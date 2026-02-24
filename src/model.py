@@ -1,6 +1,6 @@
 from transformers import pipeline
 
-MODEL_NAME = "distilbert-base-uncased-finetuned-sst-2-english"
+MODEL_NAME = "cardiffnlp/twitter-roberta-base-sentiment"
 MAX_INPUT_LENGTH = 512
 
 classifier = None
@@ -31,8 +31,20 @@ def predict(text: str) -> dict:
         load_model()
         
     prediction = classifier(text)[0]
+
+    # This model uses labels like 'LABEL_0', 'LABEL_1', 'LABEL_2'.
+    # We'll map them to human-readable names.
+    # From the model's documentation: 0 -> Negative, 1 -> Neutral, 2 -> Positive
+    label_map = {
+        "LABEL_0": "NEGATIVE",
+        "LABEL_1": "NEUTRAL",
+        "LABEL_2": "POSITIVE"
+    }
+    
+    readable_label = label_map.get(prediction["label"], prediction["label"].upper())
+
     return {
-        "label": prediction["label"],
+        "label": readable_label,
         "score": prediction["score"],
         "model_name": MODEL_NAME
     }
