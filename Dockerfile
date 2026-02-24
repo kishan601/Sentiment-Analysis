@@ -14,9 +14,16 @@ ENV VIRTUAL_ENV=/app/venv
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Copy requirements and install them into the virtual environment
-# This will compile tokenizers for the correct architecture and install all other packages.
 COPY requirements.txt .
+
+# Upgrade pip first
+RUN pip install --no-cache-dir --upgrade pip
+
+# Install CPU-only torch from official PyTorch CPU index
+RUN pip install --no-cache-dir torch==2.1.2 \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# Now install the rest of dependencies (WITHOUT torch in requirements.txt)
 RUN pip install --no-cache-dir -r requirements.txt
 
 # STAGE 2: The "Runner"
