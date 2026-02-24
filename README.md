@@ -22,13 +22,26 @@ This service is designed as a self-contained, containerized application, ensurin
 
 ### High-Level Design
 
-![Architecture Diagram](https://i.imgur.com/gA9ckN2.png)
+```mermaid
+graph TD
+    A[Client] -- "HTTP POST Request<br/>(application/json)" --> B(Gunicorn WSGI Server);
+    B -- Forwards Request --> C(Flask Application);
+    C -- "Processes Request" --> D[Sentiment Analysis Model <br/>(DistilBERT)];
+    D -- "Returns Prediction (Label, Score)" --> C;
+    C -- "JSON Response" --> A;
 
-1.  A client sends an HTTP `POST` request with a text payload to the API endpoint.
-2.  The request is received by the **Gunicorn** WSGI server.
-3.  **Flask**, the web framework, routes the request to the appropriate prediction logic.
-4.  The pre-loaded **DistilBERT** model and tokenizer perform inference on the text.
-5.  The prediction (label and confidence score) is formatted into a JSON response and returned to the client.
+    style A fill:#e0e0e0,stroke:#333,stroke-width:2px
+    style B fill:#415a77,stroke:#fff,stroke-width:2px
+    style C fill:#415a77,stroke:#fff,stroke-width:2px
+    style D fill:#00b4d8,stroke:#fff,stroke-width:2px
+```
+
+The data flows through the system as follows:
+1.  A **Client** sends an HTTP `POST` request with a JSON payload containing the text to the API endpoint.
+2.  The request is received by the **Gunicorn** WSGI server, which is the production-ready interface to the application.
+3.  **Flask**, our web framework, receives the request from Gunicorn and routes it to the prediction logic.
+4.  The pre-loaded **DistilBERT model** performs inference on the text to determine the sentiment.
+5.  The resulting prediction (the label and confidence score) is formatted into a **JSON response** by Flask and sent back to the client.
 
 ### Technology Stack
 
@@ -89,11 +102,11 @@ This service is designed as a self-contained, containerized application, ensurin
 | `text` | String | The text you wish to analyze.    | Yes      |
 
 *Example:*
-```json
+'''json
 {
   "text": "This new feature is incredibly intuitive and well-designed."
 }
-```
+'''
 
 #### Responses
 
@@ -102,23 +115,23 @@ This service is designed as a self-contained, containerized application, ensurin
     Returns the predicted label and a confidence score.
 
     *Example:*
-    ```json
+    '''json
     {
       "label": "POSITIVE",
       "score": 0.9999
     }
-    ```
+    '''
 
 -   **`400 Bad Request` (Client Error)**
 
     Returned if the `text` field is missing or the payload is not valid JSON.
 
     *Example:*
-    ```json
+    '''json
     {
       "error": "Invalid request. Please provide 'text' in the JSON payload."
     }
-    ```
+    '''
 
 ---
 
