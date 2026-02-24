@@ -36,6 +36,7 @@ COPY . .
 # Set the PATH to use the python from our virtual environment
 ENV PATH="/app/venv/bin:$PATH"
 
-# Expose the port and run the application
+# Expose the port and run the application. 
+# This now correctly points to the application object in src/main.py
 EXPOSE 10000
-CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:10000", "app:app"]
+CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:10000", "src.main:app"]
