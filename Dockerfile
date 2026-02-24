@@ -4,6 +4,9 @@ FROM python:3.10-slim
 # Set the working directory in the container
 WORKDIR /app
 
+# Install Rust compiler, which is needed to build the `tokenizers` package
+RUN apt-get update && apt-get install -y rustc cargo && rm -rf /var/lib/apt/lists/*
+
 # Install PyTorch separately from the official source for CPU
 RUN pip install torch==1.13.1+cpu --extra-index-url https://download.pytorch.org/whl/cpu
 
