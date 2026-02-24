@@ -7,6 +7,9 @@ WORKDIR /app
 # Install Rust compiler, which is needed to build the `tokenizers` package
 RUN apt-get update && apt-get install -y rustc cargo && rm -rf /var/lib/apt/lists/*
 
+# Set the Cargo home directory to a writable location
+ENV CARGO_HOME=/app/.cargo
+
 # Install PyTorch separately from the official source for CPU
 RUN pip install torch==1.13.1+cpu --extra-index-url https://download.pytorch.org/whl/cpu
 
