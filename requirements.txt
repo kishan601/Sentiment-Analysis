@@ -1,6 +1,7 @@
 Flask==2.2.2
 Werkzeug==2.3.8
 numpy<2.0
+https://files.pythonhosted.org/packages/4c/38/c4b799824629e55a5b56dc29a6c7c4c379532d12e6977258e727827e6e08/tokenizers-0.13.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 transformers==4.24.0
 pytest==7.2.0
 flask-cors
