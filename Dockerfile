@@ -39,4 +39,4 @@ ENV PATH="/app/venv/bin:$PATH"
 # Expose the port and run the application. 
 # This now correctly points to the application object in src/main.py
 EXPOSE 10000
-CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:10000", "src.main:app"]
+CMD ["sh", "-c", "gunicorn --workers 1 --bind 0.0.0.0:$PORT src.main:app"]
